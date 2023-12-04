@@ -2,7 +2,6 @@ package com.example.wiremock;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.cloud.contract.wiremock.WireMockConfigurationCustomizer;
@@ -12,7 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -27,8 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @AutoConfigureWireMock
 class WiremockApplicationImportTest {
 
-    @Autowired
-    private RestClient.Builder builder;
+    private RestTemplate restTemplate = new RestTemplate();
 
     @Test
     void shouldPass() {
@@ -41,10 +39,8 @@ class WiremockApplicationImportTest {
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 ));
 
-        var client = builder.baseUrl("http://localhost:5678").build();
-
         // WHEN
-        var response = client.get().uri("/test").retrieve().toEntity(String.class);
+        var response = restTemplate.getForEntity("http://localhost:5678/test", String.class);
 
         // THEN
         assertEquals(200, response.getStatusCode().value());
@@ -62,10 +58,8 @@ class WiremockApplicationImportTest {
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 ));
 
-        var client = builder.baseUrl("http://localhost:8080").build();
-
         // WHEN
-        var exception = assertThrows(ResourceAccessException.class, () -> client.get().uri("/test").retrieve());
+        var exception = assertThrows(ResourceAccessException.class, () -> restTemplate.getForEntity("http://localhost:8080/test", String.class));
 
         // THEN
         assertNotNull(exception);
